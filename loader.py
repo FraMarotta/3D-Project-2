@@ -1,18 +1,23 @@
 # Authors: Simone Maravigna, Francesco Marotta
 # Date: 2023-11
 # Project: 3D Object Detection on nuScenes Dataset
+# File: loader.py
+# Description: This file contains the code to load the dataset.
 
+# --- Imports --- #
 import torch
-from nuimages import NuImages
 from nuscenes.nuscenes import NuScenes
 from nuscenes.utils.data_classes import LidarPointCloud, Box
 from torch.utils.data import Dataset
 from torchvision.io import read_image, ImageReadMode
+import numpy as np
+# --- Functions --- #
 
+#defining the collate function
 def collate_fn(batch):
     return tuple(zip(*batch))
 
-#get a dictionary class->number
+#function to get a dictionary class->number
 def get_id_dict():
     id_dict = {}
     #eg, id_dict['animal']=1, id_dict['human.pedestrian.adult']=2, etc 0 is background
@@ -20,7 +25,7 @@ def get_id_dict():
         id_dict[line.replace('\n', '')] = i+1 #creating matches class->number
     return id_dict
 
-#get a dictionary number->class
+#function to get a dictionary number->class
 def get_id_dict_rev():
     id_dict_rev = {}
     #eg, id_dict_rev[1]='animal', id_dict_rev[2]='human.pedestrian.adult', etc 0 is background
@@ -28,6 +33,7 @@ def get_id_dict_rev():
         id_dict_rev[i+1] = line.replace('\n', '') #creating matches number->class
     return id_dict_rev
 
+#--- Classes --- #
 
 #defining the dataset class
 class NuScenesDataset(Dataset):
@@ -79,8 +85,8 @@ class NuScenesDataset(Dataset):
         img_filename = self.nusc.get_sample_data_path(img_token)
         #get the filename of the lidar
         lidar_filename = self.nusc.get_sample_data_path(lidar_token)
-        #read the image as tensor
-        img = read_image(img_filename, ImageReadMode.RGB)
+        #read the image as tensor and normalize it
+        img = read_image(img_filename, ImageReadMode.RGB)/255
         #read the lidar 
         lidar = LidarPointCloud.from_file(lidar_filename)
         #get the sample token of the image
@@ -114,12 +120,14 @@ class NuScenesDataset(Dataset):
             })
         
         # put boxes and labels into tensors
-        boxes = torch.Tensor([d['bbox'] for d in data])
-        labels = torch.as_tensor([d['category_id'] for d in data], dtype=torch.int64)
-
-        return img, lidar, boxes, labels
+        boxes = torch.Tensor(np.array([d['bbox'] for d in data]))
+        labels = torch.Tensor(np.array([d['category_id'] for d in data]))
+        tokens = [img_token, lidar_token]
+        return img, lidar, boxes, labels, tokens
         
 
     def __len__(self):
         return len(self.front_tokens)
     
+dataset = NuScenesDataset(root='data/sets/nuscenes', id_dict=get_id_dict())
+dataloader = torch.utils.data.DataLoader(dataset, batch_size=1, shuffle=True, num_workers=0, collate_fn=collate_fn)
