@@ -128,6 +128,3 @@ class NuScenesDataset(Dataset):
 
     def __len__(self):
         return len(self.front_tokens)
-    
-dataset = NuScenesDataset(root='data/sets/nuscenes', id_dict=get_id_dict())
-dataloader = torch.utils.data.DataLoader(dataset, batch_size=1, shuffle=True, num_workers=0, collate_fn=collate_fn)
