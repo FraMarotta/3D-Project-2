@@ -86,7 +86,7 @@ class NuScenesDataset(Dataset):
         #get the filename of the lidar
         lidar_filename = self.nusc.get_sample_data_path(lidar_token)
         #read the image as tensor and normalize it
-        img = read_image(img_filename, ImageReadMode.RGB)/255
+        img = read_image(img_filename, ImageReadMode.RGB)
         #read the lidar 
         lidar = LidarPointCloud.from_file(lidar_filename)
         #get the sample token of the image
@@ -102,7 +102,11 @@ class NuScenesDataset(Dataset):
             #get the label of the annotation navigating the tables
             label = self.nusc.get('category', self.nusc.get('instance', self.nusc.get('sample_annotation', ann)['instance_token'])['category_token'])['name']
             #get the bbox of the annotation
-            bbox = self.nusc.get('image_annotation', ann)['bbox_corners']
+            #questo non si può fare, devo simularlo bbox = self.nusc.get('image_annotations', ann)['bbox_corners']
+            image_annotations = self.nusc.image_annotations
+            for ia in image_annotations:
+                if ia['sample_annotation_token'] == ann:
+                    bbox = ia['bbox_corners']
             #get the class of the annotation
             cl = self.id_dict[label]
             #append the data to the list
@@ -120,11 +124,11 @@ class NuScenesDataset(Dataset):
             })
         
         # put boxes and labels into tensors
-        boxes = torch.Tensor(np.array([d['bbox'] for d in data]))
-        labels = torch.Tensor(np.array([d['category_id'] for d in data]))
+        boxes = torch.Tensor([d['bbox'] for d in data])
+        labels = torch.as_tensor([d['category_id'] for d in data], dtype=torch.int64)
         tokens = [img_token, lidar_token]
         #return img, lidar, boxes, labels, tokens
-        return img, boxes, labels
+        return img, boxes, labels, sample_token
 
     def __len__(self):
         return len(self.front_tokens)
