@@ -28,7 +28,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 id_dict = get_id_dict()
 id_dict_rev = get_id_dict_rev()
-val_dataset = NuScenesDataset('C:/Users/franc/Documents/GitHub/3D-Project-2/data/sets/nuscenes', id_dict=id_dict, version='mini')
+val_dataset = NuScenesDataset('./data/sets/nuscenes', id_dict=id_dict, version='mini')
 val_loader = DataLoader(val_dataset, batch_size=1, collate_fn=collate_fn)
 
 #-------------------------------------------
@@ -42,7 +42,7 @@ model.roi_heads.box_predictor = torchvision.models.detection.faster_rcnn.FastRCN
 
 model.to(device)
 
-model.load_state_dict(torch.load("C:/Users/franc/Documents/GitHub/3D-Perception-1/checkpoints/checkpoint_epoch9_2023-10-23_01-46-43.pth"))
+model.load_state_dict(torch.load("./checkpoints/checkpoint_epoch9_2023-10-23_01-46-43.pth"))
 
 mAP = MeanAveragePrecision(class_metrics=True).to(device)
 
