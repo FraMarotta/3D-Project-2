@@ -65,8 +65,6 @@ margin = 30
 
 # iterate over all samples
 for i, d in enumerate(lidar_pred_data['results']):
-    if i == 10:
-        break
     fig, axes = plt.subplots(1, 2, figsize=(18, 9))
     # plot lidar predictions
     # iterate over all predictions for the current sample
