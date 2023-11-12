@@ -16,7 +16,8 @@ from matplotlib import rcParams
 import json
 from nuscenes import NuScenes
 from pyquaternion import Quaternion
-
+from loader2D import get_id_dict_rev
+import os
 #-------------------------------------------
 # helper functions
 #-------------------------------------------
@@ -46,7 +47,7 @@ def create_box(sample_data_token, ann_rec):
     box.rotate(Quaternion(cs_record['rotation']).inverse)
     
     if sensor_record['modality'] == 'camera' and not \
-            box_in_image(box, cam_intrinsic, imsize):
+            box_in_image(box, cam_intrinsic, imsize, vis_level=BoxVisibility.ALL):
         return None, None, None
  
     return data_path, box, cam_intrinsic
@@ -56,15 +57,16 @@ def create_box(sample_data_token, ann_rec):
 #-------------------------------------------
 
 # open dataset and json files
-nusc = NuScenes(version='v1.0-mini', dataroot='data/sets/nuscenes', verbose=True)
+nusc = NuScenes(version='v1.0-mini', dataroot='data/sets/nuscenes', verbose=False)
 lidar_pred_file = open('results_nusc.json', 'r')
 lidar_pred_data = json.load(lidar_pred_file)
 camera_pred_file = open('results_fasterRCNN.json', 'r')
 camera_pred_data = json.load(camera_pred_file)
-margin = 30
-
+margin = 50
+id_dict_rev = get_id_dict_rev()
 # iterate over all samples
 for i, d in enumerate(lidar_pred_data['results']):
+    scene = nusc.get('scene', nusc.get('sample', str(d))['scene_token'])['name']
     fig, axes = plt.subplots(1, 2, figsize=(18, 9))
     # plot lidar predictions
     # iterate over all predictions for the current sample
@@ -87,7 +89,9 @@ for i, d in enumerate(lidar_pred_data['results']):
         axes[0].set_ylim([np.min(corners[1, :]) - margin, np.max(corners[1, :]) + margin])
         axes[0].axis('off')
         axes[0].set_aspect('equal')
-
+        axes[0].set_title('LIDAR view')
+        axes[0].text(corners[0, 0], corners[1, 0], ann_rec['detection_name'], color='b', fontsize=8)
+        
         # Plot CAMERA view.
         data_path, box, camera_intrinsic = create_box(cam, ann_rec)
         im = Image.open(data_path)
@@ -96,16 +100,21 @@ for i, d in enumerate(lidar_pred_data['results']):
         axes[1].axis('off')
         axes[1].set_aspect('equal')
         box.render(axes[1], view=camera_intrinsic, normalize=True, colors=('b', 'b', 'b'), linewidth= 1)
-
+        corners = view_points(box.corners(), camera_intrinsic, True)[:2, :]
+        axes[1].text(corners[0, 0], corners[1, 0], ann_rec['detection_name'], color='b', fontsize=8)
+    
     # plot 2D camera predictions
     sample_prediction = camera_pred_data[str(d)]
     for j, box in enumerate(sample_prediction['boxes']):
         if sample_prediction['scores'][j] < 0.6:
             break #break because scores are in descending order
         axes[1].add_patch(plt.Rectangle((box[0], box[1]), box[2]-box[0], box[3]-box[1], fill=False, edgecolor='r', linewidth=1))
-
+        axes[1].text(box[0], box[1], id_dict_rev[sample_prediction['labels'][j]].split('.')[-1], color='r', fontsize=8)
+    
     # save figure
-    plt.savefig('output/eval_' + str(i)+ '_' + str(d) +'.png')
+    output_dir = 'output/'+ str(scene)
+    os.makedirs(output_dir, exist_ok=True)
+    plt.savefig(output_dir +'/eval_' + str(i)+ '_' + str(d) +'.png')
 
 
 # close json file
