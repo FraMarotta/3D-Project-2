@@ -99,14 +99,13 @@ class NuScenesDataset(Dataset):
                 annotations.append(ann['token'])
         #in annotations there are all the sample_annotations tokens of the image
         for ann in annotations:
-            #get the label of the annotation navigating the tables
-            label = self.nusc.get('category', self.nusc.get('instance', self.nusc.get('sample_annotation', ann)['instance_token'])['category_token'])['name']
             #get the bbox of the annotation
             #questo non si può fare, devo simularlo bbox = self.nusc.get('image_annotations', ann)['bbox_corners']
             image_annotations = self.nusc.image_annotations
             for ia in image_annotations:
                 if ia['sample_annotation_token'] == ann:
                     bbox = ia['bbox_corners']
+                    label = ia['category_name']
             #get the class of the annotation
             cl = self.id_dict[label]
             #append the data to the list
@@ -118,7 +117,7 @@ class NuScenesDataset(Dataset):
 
         if len(data) == 0:
             data.append({
-            'bbox': [0,0,0,0,0.1,0.1,0.1,0.1],
+            'bbox': [0,0,0.1,0.1],
             'category_id': 0,
             'category_name': 'void'
             })

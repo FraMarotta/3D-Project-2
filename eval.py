@@ -70,9 +70,9 @@ with torch.no_grad():
         output = model(images)
 
         mean_ap = mAP.forward(output, targets)
-        print(mean_ap)
+        valaccuracy += mean_ap['map'].item()
         # Check if the file exists
-        """ if not os.path.isfile('results_fasterRCNN.json'):
+        if not os.path.isfile('results_fasterRCNN.json'):
             with open('results_fasterRCNN.json', 'w') as f:
                 json.dump({}, f)
         with open('results_fasterRCNN.json', 'r') as f:
@@ -88,17 +88,6 @@ with torch.no_grad():
             data[token[0]] = output[j]
         # Save the results to the file
         with open('results_fasterRCNN.json', 'w') as f:
-            json.dump(data, f) """
+            json.dump(data, f)
 
-print(mean_ap)
-# print accuracy per class
-i=0
-print("{:<25} {:<25}".format('Class', 'AP'))  # Header
-for j in range(1,24):
-    if i < len(mean_ap['classes']) and j == mean_ap['classes'][i].item():
-        print("{:<25} {:<25}".format(id_dict_rev[j].split('.')[-1], str(round(mean_ap['map_per_class'][i].item(), 3))))
-        i += 1
-    else:
-        print("{:<25} {:<25}".format(id_dict_rev[j].split('.')[-1], '0.0'))
-   
-print('Val accuracy: {}'.format(mean_ap['map'].item()))
+print('Val accuracy: {}'.format(valaccuracy/len(val_loader)))
