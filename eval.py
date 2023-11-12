@@ -69,9 +69,10 @@ with torch.no_grad():
             targets.append(d)
         output = model(images)
 
-        mAP.update(output, targets)
+        mean_ap = mAP.forward(output, targets)
+        print(mean_ap)
         # Check if the file exists
-        if not os.path.isfile('results_fasterRCNN.json'):
+        """ if not os.path.isfile('results_fasterRCNN.json'):
             with open('results_fasterRCNN.json', 'w') as f:
                 json.dump({}, f)
         with open('results_fasterRCNN.json', 'r') as f:
@@ -87,9 +88,8 @@ with torch.no_grad():
             data[token[0]] = output[j]
         # Save the results to the file
         with open('results_fasterRCNN.json', 'w') as f:
-            json.dump(data, f)
+            json.dump(data, f) """
 
-mean_ap = mAP.compute()
 print(mean_ap)
 # print accuracy per class
 i=0
