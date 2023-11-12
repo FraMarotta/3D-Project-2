@@ -57,7 +57,7 @@ def create_box(sample_data_token, ann_rec):
 
 # open dataset and json files
 nusc = NuScenes(version='v1.0-mini', dataroot='data/sets/nuscenes', verbose=True)
-lidar_pred_file = open('results_nusc.json', 'r')
+lidar_pred_file = open('results_ssn.json', 'r')
 lidar_pred_data = json.load(lidar_pred_file)
 camera_pred_file = open('results_fasterRCNN.json', 'r')
 camera_pred_data = json.load(camera_pred_file)
